@@ -1,21 +1,16 @@
 # 📄 Document QA Bot
 
-This is a Gradio-powered chatbot that answers questions based on uploaded PDF documents using IBM Watsonx and LangChain.
+This is a Gradio-powered chatbot that answers questions based on uploaded PDF documents using IBM Watsonx and LangChain. It extracts text from the PDF, embeds it using Watsonx Embeddings, stores it in ChromaDB, and uses a RetrievalQA chain to generate answers using Watsonx LLM.
+
+---
 
 ## 🚀 Features
+
 - Upload any readable PDF
 - Ask questions about its content
 - Powered by IBM Watsonx LLM and Embeddings
 - Uses LangChain + ChromaDB for retrieval
-
-## 🛠️ Setup
-
-```bash
-pip install -r requirements.txt
-python qabot.py
-# 📄 Document QA Bot
-
-This project is a Gradio-powered chatbot that answers questions based on uploaded PDF documents using IBM Watsonx and LangChain. It extracts text from the PDF, embeds it using Watsonx Embeddings, stores it in ChromaDB, and uses a RetrievalQA chain to generate answers using Watsonx LLM.
+- Simple Gradio interface
 
 ---
 
@@ -34,6 +29,6 @@ This project is a Gradio-powered chatbot that answers questions based on uploade
 
 If you're running this inside the IBM Skills Network lab environment:
 
-1. Run the app:
+1. Open the terminal and run:
    ```bash
    python qabot.py
