@@ -8,16 +8,16 @@ from langchain_community.vectorstores import Chroma
 from langchain_community.document_loaders import PyPDFLoader
 from langchain.chains import RetrievalQA
 import gradio as gr
-import warnings
 
 # Suppress warnings
 def warn(*args, **kwargs):
     pass
 
+import warnings
 warnings.warn = warn
 warnings.filterwarnings('ignore')
 
-# LLM setup
+## LLM
 def get_llm():
     model_id = 'ibm/granite-3-2-8b-instruct'
     parameters = {
@@ -33,74 +33,62 @@ def get_llm():
     )
     return watsonx_llm
 
-# Load PDF document
+## Document loader
 def document_loader(file):
     loader = PyPDFLoader(file.name)
     loaded_document = loader.load()
     return loaded_document
 
-# Split text into chunks
+## Text splitter
 def text_splitter(data):
-    splitter = RecursiveCharacterTextSplitter(
+    text_splitter = RecursiveCharacterTextSplitter(
         chunk_size=1000,
         chunk_overlap=200,
         length_function=len,
     )
-    chunks = splitter.split_documents(data)
+    chunks = text_splitter.split_documents(data)
     return chunks
 
-# Embedding model setup
+## Embedding model
 def watsonx_embedding():
     embed_params = {
         EmbedTextParamsMetaNames.RETURN_OPTIONS: ["embedding"],
         EmbedTextParamsMetaNames.TRUNCATE_INPUT_TOKENS: True
     }
-    embedding_model = WatsonxEmbeddings(
+    watsonx_embedding = WatsonxEmbeddings(
         model_id="ibm/slate.125m.english",
         url="https://us-south.ml.cloud.ibm.com",
         project_id="skills-network",
         params=embed_params,
     )
-    return embedding_model
+    return watsonx_embedding
 
-# Vector database creation with validation
+## Vector db
 def vector_database(chunks):
-    # Filter out empty chunks
-    chunks = [chunk for chunk in chunks if chunk.page_content.strip()]
-    if not chunks:
-        raise ValueError("No valid text chunks to embed.")
-
     embedding_model = watsonx_embedding()
-    texts = [chunk.page_content for chunk in chunks]
-    embeddings = embedding_model.embed_documents(texts)
-
-    if len(texts) != len(embeddings):
-        raise ValueError("Mismatch between chunks and embeddings")
-
     vectordb = Chroma.from_documents(chunks, embedding_model)
     return vectordb
 
-# Create retriever from uploaded file
+## Retriever
 def retriever(file):
     splits = document_loader(file)
     chunks = text_splitter(splits)
     vectordb = vector_database(chunks)
-    return vectordb.as_retriever()
+    retriever = vectordb.as_retriever()
+    return retriever
 
-# QA chain execution
+## QA Chain
 def retriever_qa(file, query):
     llm = get_llm()
     retriever_obj = retriever(file)
-    qa = RetrievalQA.from_chain_type(
-        llm=llm,
-        chain_type="stuff",
-        retriever=retriever_obj,
-        return_source_documents=False
-    )
+    qa = RetrievalQA.from_chain_type(llm=llm,
+                                     chain_type="stuff",
+                                     retriever=retriever_obj,
+                                     return_source_documents=False)
     response = qa.invoke({"query": query})
     return response['result']
 
-# Gradio interface
+# Create Gradio interface
 rag_application = gr.Interface(
     fn=retriever_qa,
     allow_flagging="never",
@@ -114,4 +102,4 @@ rag_application = gr.Interface(
 )
 
 # Launch the app
-rag_application.launch(server_name="0.0.0.0", server_port=7860)
+rag_application.launch(server_name="0.0.0.0", server_port=7861)
